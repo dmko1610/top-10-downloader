@@ -10,6 +10,7 @@ class ParseApplications {
   fun parse(xmlData: String): Boolean {
     var status = true
     var inEntry = false
+    var gotImage = false
     var textValue = ""
 
     try {
@@ -20,11 +21,16 @@ class ParseApplications {
       var eventType = xpp.eventType
       var currentRecord = FeedEntry()
       while (eventType != XmlPullParser.END_DOCUMENT) {
-        val tagName = xpp.name.lowercase()
+        val tagName = xpp.name?.lowercase()
         when (eventType) {
           XmlPullParser.START_TAG -> {
             if (tagName == "entry") {
               inEntry = true
+            } else if ((tagName == "image") && inEntry) {
+              val imageResolution = xpp.getAttributeValue(null, "height")
+              if (imageResolution.isNotEmpty()) {
+                gotImage = imageResolution == "53"
+              }
             }
           }
           XmlPullParser.TEXT -> textValue = xpp.text
@@ -38,9 +44,9 @@ class ParseApplications {
                 }
                 "name" -> currentRecord.name = textValue
                 "artist" -> currentRecord.artist = textValue
-                "releasedate" -> currentRecord.releaseDate = textValue
+                "releaseDate" -> currentRecord.releaseDate = textValue
                 "summary" -> currentRecord.summary = textValue
-                "image" -> currentRecord.imageURL = textValue
+                "image" -> if (gotImage) currentRecord.imageURL = textValue
               }
             }
           }
